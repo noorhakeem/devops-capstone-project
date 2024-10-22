@@ -131,7 +131,7 @@ def delete_accounts(account_id):
 
     account = Account.find(account_id)
     if account:
-        ccount.delete()
+        account.delete()
 
     return "", status.HTTP_204_NO_CONTENT
 
