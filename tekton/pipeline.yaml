@@ -1,4 +1,3 @@
-#
 # This pipeline needs the following tasks from Tekton Hub
 #   - git-clone
 #   - flake8
@@ -6,33 +5,46 @@
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
-metadata:  
+metadata:
   name: cd-pipeline
 spec:
   workspaces:
     - name: pipeline-workspace
   params:
     - name: repo-url
+      type: string  # Specify the type of parameter
     - name: branch
+      type: string  # Specify the type of parameter
       default: main
   tasks:
     - name: init
       workspaces:
-        - name: source
-          workspace: pipeline-workspace          
+        - name: pipeline-workspace  # Match the workspace name defined above
       taskRef:
-        name: cleanup
+        name: cleanup  # Ensure that the cleanup task is defined in your Tekton tasks
 
     - name: clone
       workspaces:
-        - name: output
-          workspace: pipeline-workspace          
+        - name: pipeline-workspace  # Match the workspace name defined above
       taskRef:
-        name: git-clone
+        name: git-clone  # Ensure that the git-clone task is available
       params:
-      - name: url
-        value: $(params.repo-url)
-      - name: revision
-        value: $(params.branch)
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.branch)
       runAfter:
         - init
+
+    - name: lint
+      workspaces:
+        - name: pipeline-workspace  # Match the workspace name defined above
+      taskRef:
+        name: flake8  # Ensure that the flake8 task is available
+      params:
+        - name: image
+          value: "python:3.9-slim"
+        - name: args
+          value: ["--count", "--max-complexity=10", "--max-line-length=127", "--statistics"]
+      runAfter:
+        - clone
